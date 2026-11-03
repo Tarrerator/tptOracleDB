@@ -1,0 +1,20 @@
+# PowerShell
+tools/
+out/
+ps_modules/
+*.psd1.bak
+*.psm1.bak
+TestResults/
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Credenciales de pruebas
+*.ps1cred
+.env
