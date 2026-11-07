@@ -44,9 +44,35 @@ Get-tptOracleDBTables -Server myoracle.example.com -Credential $cred -Owner 'SCO
 Get-tptOracleDBStatus -Server myoracle.example.com -Credential $cred
 ```
 
-## Configuración Futura
+# Configuración
 
-Se planea añadir configuración manual en `~/.tpt/tptOracleDB.yaml` para conexión persistente y parámetros por defecto. No programática inicialmente.
+El módulo utiliza un fichero centralizado de configuración YAML para todas las plataformas TPT: `~/.tpt/tpt_config.yaml`.
+
+**Sección para tptOracleDB:**
+```yaml
+platforms:
+  tptOracleDB:
+    - name: oracle-prod
+      server: oracle-prod.corp.local
+      port: 1521
+      sid: ORCLPDB1
+      default: true
+      tags: [producción]
+    - name: oracle-lab
+      server: oracle-lab.local
+      port: 1521
+      sid: ORCLPDB1
+      default: false
+      tags: [laboratorio]
+```
+
+- **`server`**: FQDN o IP del servidor Oracle.
+- **`port`**: Puerto de la instancia (por defecto 1521).
+- **`sid`**: Nombre de la instancia SID.
+- **`default`**: Marca la plataforma predeterminada (solo una debe ser `true`).
+- **`tags`**: Lista libre para clasificación.
+
+**Nota:** Las credenciales NO deben incluirse en este fichero. Usar `Get-Credential` al conectarse.
 
 ## Licencia
 
