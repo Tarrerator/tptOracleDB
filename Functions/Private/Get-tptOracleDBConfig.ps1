@@ -19,30 +19,11 @@ function Get-tptOracleDBConfig {
     [OutputType([PSCustomObject[]])]
     param()
 
-    $configPath = "~\/.tpt\/tpt_config.yaml"
-    if (-not (Test-Path $configPath)) {
-        throw "Fichero de configuración centralizado no encontrado: $configPath"
-    }
+    Import-Module (Join-Path $PSScriptRoot -ChildPath 'TPT-Helpers.ps1') -Force
 
-    try {
-        $yamlContent = Get-Content -Path $configPath -Raw
-        # Convertir YAML a JSON usando la sintaxis de objeto de PowerShell (YAML no está estructurado en PS)
-        # Usar ConvertFrom-Yaml si está disponible, o ConvertFrom-Json para YAML estructurado
-        $yamlData = $yamlContent | ConvertFrom-Yaml -ErrorAction Stop
-    } catch {
-        # Fallback: intentar convertir YAML estructurado como JSON
-        try {
-            $yamlData = $yamlContent | ConvertFrom-Json -ErrorAction Stop
-        } catch {
-            throw "No se pudo parsear el fichero YAML $configPath. Error: $($_.Exception.Message)"
-        }
-    }
+    $yamlData = Convert-tptYamlToPSCustomObject
 
-    if (-not $yamlData -or -not $yamlData.platforms) {
-        throw "Estructura inválida en el fichero YAML: falta la sección 'platforms'"
-    }
-
-    if (-not $yamlData.platforms.tptOracleDB) {
+    if (-not $yamlData -or -not $yamlData.platforms.tptOracleDB) {
         throw "No se encontró la sección 'tptOracleDB' en la configuración YAML"
     }
 

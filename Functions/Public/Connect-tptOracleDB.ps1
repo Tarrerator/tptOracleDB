@@ -7,13 +7,15 @@ function Connect-tptOracleDB {
     .DESCRIPTION
         Función pública. Conecta a Oracle usando las credenciales y parámetros de conexión
         proporcionados, ejecuta una consulta de diagnóstico y devuelve los resultados. Requiere
-        sqlplus (Oracle Instant Client o instalación completa de Oracle).
+        sqlplus (Oracle Instant Client o instalación completa de Oracle). Acepta -Platform
+        para resolver la conexión desde la configuración centralizada.
 
     .PARAMETER Server
-        Servidor o nombre de servicio/tnsalias (default: localhost).
+        Servidor o nombre de servicio/tnsalias (default: localhost). Si no se proporciona y se usa
+        -Platform, se toma del YAML.
 
     .PARAMETER Port
-        Puerto TCP (default: 1521).
+        Puerto TCP (default: 1521). Si no se proporciona y se usa -Platform, se toma del YAML.
 
     .PARAMETER ServiceName
         Nombre de servicio Oracle. Si no se proporciona, construir SID como "server:port" si hay puerto,
@@ -22,9 +24,22 @@ function Connect-tptOracleDB {
     .PARAMETER Credential
         Credenciales validadas de usuario Oracle (usuario y password). Requerido.
 
+    .PARAMETER Platform
+        Nombre de la plataforma desde la configuración centralizada (YAML).
+        Si se proporciona, los valores de Server y Port se toman del YAML a menos que se proporcionen
+        explícitamente.
+
     .EXAMPLE
         Connect-tptOracleDB -Server myoracle.example.com -Credential (Get-Credential)
         Conecta a Oracle con usuario/password, puerto 1521 y servidor por defecto.
+
+    .EXAMPLE
+        Connect-tptOracleDB -Credential (Get-Credential) -Platform oracle-prod
+        Resuelve la plataforma oracle-prod desde el YAML centralizado.
+
+    .EXAMPLE
+        Connect-tptOracleDB -Platform oracle-prod -Credential (Get-Credential) -Port 1521
+        Combina plataforma YAML y override explícito de puerto.
 
     .OUTPUTS
         System.Management.Automation.PSObject con propiedades:
@@ -33,6 +48,9 @@ function Connect-tptOracleDB {
     [CmdletBinding()]
     [OutputType([System.Object])]
     param(
+        [Parameter(Mandatory = $false)]
+        [string]$Platform = $null,
+
         [string]$Server = $null,
 
         [int]$Port = 1521,
@@ -41,6 +59,27 @@ function Connect-tptOracleDB {
 
         [ValidateNotNull()][PSCredential]$Credential = $null
     )
+
+    Import-Module (Join-Path $PSScriptRoot -ChildPath 'TPT-Helpers.ps1') -Force
+
+    # Resolver parámetros desde YAML si -Platform está presente
+    if ($Platform) {
+        $config = Get-tptOracleDBConfig
+        $selectedPlatform = $config | Where-Object { $_.name -eq $Platform }
+        
+        if (-not $selectedPlatform) {
+            throw "Plataforma '$Platform' no encontrada en la configuración de tptOracleDB."
+        }
+
+        # Usar valores del YAML solo si los parámetros no fueron proporcionados explícitamente
+        if (-not $Server) { $Server = $selectedPlatform.server }
+        if ($Port -eq 1521 -and $selectedPlatform.port) { $Port = $selectedPlatform.port }
+    }
+
+    # Validar que Server está presente
+    if (-not $Server) {
+        throw "Se requiere -Server (o -Platform para resolver desde YAML)."
+    }
 
     Test-tptOracleDBCommand
 
