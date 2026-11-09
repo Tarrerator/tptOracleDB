@@ -19,7 +19,6 @@ function Get-tptOracleDBConfig {
     [OutputType([PSCustomObject[]])]
     param()
 
-    Import-Module (Join-Path $PSScriptRoot -ChildPath 'TPT-Helpers.ps1') -Force
 
     $yamlData = Convert-tptYamlToPSCustomObject
 
