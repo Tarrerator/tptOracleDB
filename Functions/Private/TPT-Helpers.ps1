@@ -85,14 +85,22 @@ function Convert-tptYamlToPSCustomObject {
             $currentPlatform = [PSCustomObject]@{}
             $inner = $content.Substring(2).Trim()
             if ($inner -match '^([A-Za-z0-9_-]+)\s*:\s*(.*)$') {
-                $currentPlatform | Add-Member -NotePropertyName $matches[1] -NotePropertyValue $matches[2].Trim()
+                $firstVal = $matches[2].Trim()
+                if ($firstVal.Length -ge 2) {
+                    $firstVal = $firstVal.Trim([char]39, [char]34)
+                }
+                $currentPlatform | Add-Member -NotePropertyName $matches[1] -NotePropertyValue $firstVal
             }
             continue
         }
 
         # Propiedad del objeto: indentacion 6, 'clave: valor'
         if ($indent -eq 6 -and $content -match '^([A-Za-z0-9_-]+)\s*:\s*(.*)$' -and $null -ne $currentPlatform) {
-            $currentPlatform | Add-Member -NotePropertyName $matches[1] -NotePropertyValue $matches[2].Trim() -Force
+            $val = $matches[2].Trim()
+            if ($val.Length -ge 2) {
+                $val = $val.Trim([char]39, [char]34)
+            }
+            $currentPlatform | Add-Member -NotePropertyName $matches[1] -NotePropertyValue $val -Force
         }
     }
 
